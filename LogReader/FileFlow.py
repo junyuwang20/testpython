@@ -4,12 +4,11 @@ import os
 from ReadLogDo import ReadLogDo
 import errno
 from type_limit import type_limit
+import logging
 
-#ReadFile = "test.log"
-#SeekFile = "Seek.log"
-#Encoding="utf-8"
-#ReadLimit=5
-#Seek=0
+
+log_name = 'logreader'
+log = logging.getLogger(log_name)
 
 #函数：读取文件索引
 def ReadSeek(FileName):
@@ -61,15 +60,14 @@ class FileFlow(object):
                 #line = line.encode(self.__encoding)
                 try:
                     while line:
-                        print('**************************************start read at offset {}******************************'.format(seek))
+                        log.debug('**************************************start read at offset {}******************************'.format(seek))
                         seek_offset = self.__reader.read_do(line)
                         seek = seek + seek_offset
-                        #print('seek is {};offset is {}; f.tell() is {}; line[0] is \'{}\''.format(seek, seek_offset, f.tell(), line[0]))
+                        #log.debug('seek is {};offset is {}; f.tell() is {}; line[0] is \'{}\''.format(seek, seek_offset, f.tell(), line[0]))
 
                         if f.tell() == end_pos:
                             break
 
-                        #print(line + ":" + str(seek))
                         f.seek(seek)
                         line = f.read(self.__read_len)
                         #line = f.readline()
@@ -77,19 +75,3 @@ class FileFlow(object):
                     WriteSeek(self.__seek_file, str(seek))
                 except Exception as e:
                     raise e
-#######################################################################################
-####主程序
-#######################################################################################
-# Seek = ReadSeek(SeekFile)
-# print("seek:"+str(Seek))
-# with io.open(ReadFile, 'r', encoding=Encoding) as f:
-#     f.seek(0, 2)
-#     if Seek < f.tell():
-#         f.seek(Seek)
-#         Line = f.read(ReadLimit)
-#         while Line:
-#             #print("{}:{}".format(Line,f.tell()))
-#             Seek=f.tell()
-#             print(Line+":"+str(Seek))
-#             Line = f.read(ReadLimit)
-#         WriteSeek(SeekFile, str(Seek))

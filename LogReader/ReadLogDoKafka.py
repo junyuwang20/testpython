@@ -2,7 +2,11 @@ from pykafka import KafkaClient
 from type_limit import type_limit
 from ReadLogDo import ReadLogDo
 from ExtractorObj import ExtractorObj
-from ExtractorTzt import TztExtractor
+import logging
+
+
+log_name = 'logreader'
+loger = logging.getLogger(log_name)
 
 
 class ReadLogDoKafka(ReadLogDo):
@@ -19,7 +23,7 @@ class ReadLogDoKafka(ReadLogDo):
         self.__client = KafkaClient(hosts=self.__hosts, socket_timeout_ms=50000)
         self.__topics = self.__client.topics[self.__topic]
         self.__producer = self.__topics.get_producer()
-        print(self.__client.topics)
+        loger.debug(self.__client.topics)
 
     def read_do(self, msg_str):
 
@@ -30,7 +34,7 @@ class ReadLogDoKafka(ReadLogDo):
             logs = self.__Extractor.pop_logs()
             for log in logs:
                 blog = bytes(log)
-                print('send to kafka========', blog)
+                loger.debug('send to kafka========{}'.format(blog))
                 self.__producer.produce(blog)
             #self.__producer .produce(bytes(msg_str))
             return ret
