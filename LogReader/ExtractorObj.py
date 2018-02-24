@@ -1,5 +1,3 @@
-
-
 class ExtractorObj:
     def __init__(self):
         raise NotImplementedError
@@ -9,4 +7,3 @@ class ExtractorObj:
 
     def pop_logs(self):
         pass
-

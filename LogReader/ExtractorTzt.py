@@ -1,6 +1,13 @@
+import sys
+sys.path.append("..")
 import re
 from ExtractorObj import ExtractorObj
 from LogKeys import *
+import logging
+
+
+log_name = 'logreader'
+loger = logging.getLogger(log_name)
 
 class TztExtractor(ExtractorObj):
     def __init__(self):
@@ -40,18 +47,17 @@ class TztExtractor(ExtractorObj):
             else:
                 offset = last_end
                 last_pack_complete = False
+                loger.debug('detected unfinish pack, set file offset back to:{}'.format(offset))
                 break
 
             #get the pack content as log
             log = msg[start:end]
 
-            print('===================={}:start={};end={}; offset={}'.format(count, start,end, offset))
+            loger.debug('===================={}:start={};end={}; offset={}'.format(count, start,end, offset))
             #get the action id of the pack
             action_m = re.search('action=\S*\s', log, re.IGNORECASE)
             if action_m:
                 action = action_m.group().split('=')[1].strip()
-
-
                 #extract the log pack to structed pack
                 self.__log_packing(log, pack_time, action)
             else:
@@ -66,6 +72,8 @@ class TztExtractor(ExtractorObj):
 
         if last_pack_complete:
             offset = last+1
+
+        loger.debug('return offset:{}'.format(offset))
         return offset
 
 

@@ -1,10 +1,10 @@
 #-*-coding:utf-8-*-
-from FileFlow import FileFlow
-from ReadLogDo import ReadLogDo
-import re
-import io
 import MySQLdb
 from LogKeys import *
+import logging.config
+
+log_name = 'logconsumer'
+loger = logging.getLogger(log_name)
 
 class TableFields:
     Pack_ID = 'Pack_ID'
@@ -55,6 +55,7 @@ class LoaderTzt:
     def insert_logs(self):
         if len(self.__args) == 0:
             return
+        loger.info('writing to database......')
 
         sql = "INSERT INTO LogFlowTZT ({}, {}, {}, {}, {}, {}) VALUES (%s, %s, %s, %s, %s, %s)".\
             format(TableFields.Pack_ID, TableFields.TimeStamp, TableFields.Action, TableFields.Status, \
@@ -64,9 +65,31 @@ class LoaderTzt:
         with con:
             try:
                 cursor = con.cursor()
-                cursor.execute("delete from LogFlowTZT")
+                #cursor.execute("delete from LogFlowTZT")
                 cursor.executemany(sql, self.__args)
+                con.commit()
+                self.__args = []
+            except Exception as e:
+                con.rollback()
+                msg = repr(e)
+                e = Exception('exception in LoaderTzt.insert_logs--'+msg)
+                raise e
+            loger.info('writing to database finished')
+
+    def clear_table(self):
+        sql = "INSERT INTO LogFlowTZT ({}, {}, {}, {}, {}, {}) VALUES (%s, %s, %s, %s, %s, %s)".\
+            format(TableFields.Pack_ID, TableFields.TimeStamp, TableFields.Action, TableFields.Status, \
+                   TableFields.ServerIP, TableFields.LogContent)
+
+        con = MySQLdb.connect(self.__host, self.__usr, self.__pwd, 'LogAnalyDB')
+        with con:
+            try:
+                cursor = con.cursor()
+                cursor.execute("delete from LogFlowTZT")
                 con.commit()
             except Exception as e:
                 con.rollback()
+                msg = repr(e)
+                e = Exception('exception in LoaderTzt.clear_table--'+msg)
                 raise e
+        loger.info('clear database finished')

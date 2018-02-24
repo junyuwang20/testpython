@@ -32,6 +32,9 @@ class ReadLogDoKafka(ReadLogDo):
             offset = self.__Extractor.Extract(msg_str)
             ret = offset
             logs = self.__Extractor.pop_logs()
+            msgnum = len(logs)
+            if msgnum>0:
+                loger.info('read {} messages, ready for sending to kafka'.format(msgnum))
             for log in logs:
                 blog = bytes(log)
                 loger.debug('send to kafka========{}'.format(blog))

@@ -1,15 +1,24 @@
+import sys
+sys.path.append("..")
 from pykafka import KafkaClient
 import time
 from LoaderTzt import LoaderTzt
 from LogConsumerConfig import *
-import FileFlow
-from pykafka.partition import Partition
+import logging.config
+
+
+debug = True
+logging.config.fileConfig('logconf.cfg')
+log_name = 'logconsumer'
+loger = logging.getLogger(log_name)
 
 
 def unblock_do():
     pass
-
 #read config
+
+
+loger.info('============================start LogConsumer===========================')
 config = LogConsumerConfig('consumer.cfg')
 config = config.config()
 hosts = config.get(LogConsumerSections.kafka, LogConsumerOptions.hosts)
@@ -34,7 +43,7 @@ consumer = topic.get_simple_consumer(consumer_group=consumer_group, auto_commit_
 #init kafka partition offset
 if partition_offset >0:
     partition_offset_pairs = []
-    print('patition num:{}'.format(len(consumer.partitions)))
+    loger.debug('partition num:{}'.format(len(consumer.partitions)))
     for p in consumer.partitions.itervalues():
         if p:
             if p.latest_available_offset() >= partition_offset:
@@ -42,23 +51,35 @@ if partition_offset >0:
     try:
         consumer.reset_offsets(partition_offsets=partition_offset_pairs)
     except:
-        print('except::::::')
+        loger.error('set partition offset error!')
 
 #consume kafka message
-message = consumer.consume(block=True, unblock_event=unblock_do())
-i = 0
+loger.info('waiting for message......')
+
+offset = partition_offset
+
+#creat loader for saving log to database
+loader = LoaderTzt(host=mysql_hosts, usr=mysql_user, pwd=mysql_pwd)
+if debug:
+    loader.clear_table()
 while True:
-    print('=========start load=========')
-    loader = LoaderTzt(host=mysql_hosts, usr=mysql_user, pwd=mysql_pwd)
+    loger.info('====read from kafka start, offset:{}......'.format(offset))
+    #loader = LoaderTzt(host=mysql_hosts, usr=mysql_user, pwd=mysql_pwd)
+    i = 0
+
+    message = consumer.consume(block=True, unblock_event=unblock_do())
     while message is not None:
         i+=1
         loader.LoadPack(message.value)
-        print message.offset, '  ', message.value
-        message = consumer.consume(block=False, unblock_event=unblock_do())
-        if i == commit_batch:
+        offset = message.offset
+        loger.debug('offset:{} message:{}'.format(offset, message.value))
+        if i >= commit_batch:
             break
-
-    print('========load finished=======')
-    loader.insert_logs()
+        message = consumer.consume(block=False, unblock_event=unblock_do())
+    try:
+        loger.info('read from kafka finished, offset:{};messag num:{}'.format(offset, i))
+        loader.insert_logs()
+    except Exception as e:
+        loger.error('{}; kafka start offset={};end offset={}'.format(e, partition_offset, offset))
     time.sleep(5)
 #consumer.stop()

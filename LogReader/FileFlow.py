@@ -2,7 +2,6 @@
 import io
 import os
 from ReadLogDo import ReadLogDo
-import errno
 from type_limit import type_limit
 import logging
 
@@ -55,16 +54,18 @@ class FileFlow(object):
             end_pos = f.tell()
             if seek < end_pos:
                 f.seek(seek)
+                log.debug('file seek={}'.format(seek))
+
                 #line = f.readline()
                 line = f.read(self.__read_len)
                 #line = line.encode(self.__encoding)
                 try:
                     while line:
-                        log.debug('**************************************start read at offset {}******************************'.format(seek))
+                        log.debug('====start read at offset {}'.format(seek))
                         seek_offset = self.__reader.read_do(line)
                         seek = seek + seek_offset
-                        #log.debug('seek is {};offset is {}; f.tell() is {}; line[0] is \'{}\''.format(seek, seek_offset, f.tell(), line[0]))
-
+                        #if seek_offset > 0:
+                           # log.info('seek is {};offset is {}; f.tell() is {}; line[0] is \'{}\''.format(seek, seek_offset, f.tell(), line[0]))
                         if f.tell() == end_pos:
                             break
 

@@ -1,7 +1,6 @@
 from ConfigParser import RawConfigParser
 import os
 import io
-import copy
 
 class LogConsumerSections(object):
     kafka = 'KAFKA'
