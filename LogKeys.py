@@ -10,6 +10,8 @@ class logkeys(object):
     pack_status = 'status' #包状态  logvalues.status_ok 或 logvalues.status_err
     pack_server = 'ip'  #日志所在服务器IP
     pack_content = 'content' #包内容
+    partition_id = 'partition_id'#从哪个kafka partition中获取的
+    partition_offset = 'partition_offset' #消息在kafka partition中的偏移量
 
 class logvalues(object):
     req_pack = 'req' #请求包

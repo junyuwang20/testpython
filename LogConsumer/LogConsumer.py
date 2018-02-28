@@ -5,6 +5,7 @@ import time
 from LoaderTzt import LoaderTzt
 from LogConsumerConfig import *
 import logging.config
+from pykafka.broker import Broker
 
 
 debug = True
@@ -37,17 +38,22 @@ mysql_pwd = config.get(LogConsumerSections.mysql, LogConsumerOptions.password)
 #create kafka client
 client = KafkaClient(hosts=hosts)
 topic = client.topics[topics]
-consumer = topic.get_simple_consumer(consumer_group=consumer_group, auto_commit_enable=True, \
-                                     auto_commit_interval_ms=auto_commit_interval_ms, consumer_id=consumer_id)
+#consumer = topic.get_simple_consumer(consumer_group=consumer_group, auto_commit_enable=True, \
+#                                     auto_commit_interval_ms=auto_commit_interval_ms, consumer_id=consumer_id)
+
+consumer = topic.get_balanced_consumer(consumer_group=consumer_group, managed=True, auto_commit_enable=True, \
+                                     auto_commit_interval_ms=auto_commit_interval_ms, consumer_timeout_ms=5000)
 
 #init kafka partition offset
-if partition_offset >0:
+if partition_offset >=0:
     partition_offset_pairs = []
     loger.debug('partition num:{}'.format(len(consumer.partitions)))
     for p in consumer.partitions.itervalues():
         if p:
+            loger.debug('the latest_available_offset of partion {} is: {}'.format(p.id, p.latest_available_offset()))
             if p.latest_available_offset() >= partition_offset:
                 partition_offset_pairs.append((p, partition_offset))
+                loger.debug('reset partition {} offset to {}'.format(p.id, partition_offset))
     try:
         consumer.reset_offsets(partition_offsets=partition_offset_pairs)
     except:
@@ -67,15 +73,19 @@ while True:
     #loader = LoaderTzt(host=mysql_hosts, usr=mysql_user, pwd=mysql_pwd)
     i = 0
 
-    message = consumer.consume(block=True, unblock_event=unblock_do())
+    message = consumer.consume(block=True)
     while message is not None:
         i+=1
-        loader.LoadPack(message.value)
+        loader.LoadPack(message.value, partition_id=message.partition_id, partition_offset=message.offset)
         offset = message.offset
-        loger.debug('offset:{} message:{}'.format(offset, message.value))
+        broker = consumer.partitions[message.partition_id].leader
+        replicas_broker = consumer.partitions[message.partition_id].replicas
+        loger.debug('leader broker of partition{} is {}'.format(message.partition_id, broker.host))
+        loger.debug('offset of partition{} is {}; message:{}'.format(message.partition_id, offset, message.value))
         if i >= commit_batch:
             break
-        message = consumer.consume(block=False, unblock_event=unblock_do())
+        #message = consumer.consume(block=False, unblock_event=unblock_do())
+        message = consumer.consume(block=False)
     try:
         loger.info('read from kafka finished, offset:{};messag num:{}'.format(offset, i))
         loader.insert_logs()

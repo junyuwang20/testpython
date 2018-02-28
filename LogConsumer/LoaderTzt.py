@@ -22,9 +22,10 @@ class LoaderTzt:
         self.__usr = usr
         self.__pwd = pwd
 
-    def LoadPack(self, packstr):
+    def LoadPack(self, packstr, partition_id='', partition_offset=0):
         dict = eval(packstr)
-
+        dict[logkeys.partition_id] = str(partition_id)
+        dict[logkeys.partition_offset] = str(partition_offset)
         action = ''
         if logkeys.action in dict.keys():
             action = dict[logkeys.action]  # 功能
