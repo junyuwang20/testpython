@@ -8,7 +8,7 @@ import logging.config
 from pykafka.broker import Broker
 
 
-debug = True
+debug = False
 logging.config.fileConfig('logconf.cfg')
 log_name = 'logconsumer'
 loger = logging.getLogger(log_name)
@@ -22,20 +22,22 @@ def unblock_do():
 loger.info('============================start LogConsumer===========================')
 config = LogConsumerConfig('consumer.cfg')
 config = config.config()
+code = 'utf-8'
 hosts = config.get(LogConsumerSections.kafka, LogConsumerOptions.hosts)
-topics = config.get(LogConsumerSections.kafka, LogConsumerOptions.topics)
-consumer_group = config.get(LogConsumerSections.kafka, LogConsumerOptions.consumer_group)
+topics = config.get(LogConsumerSections.kafka, LogConsumerOptions.topics).encode(code)
+consumer_group = config.get(LogConsumerSections.kafka, LogConsumerOptions.consumer_group).encode(code)
 auto_commit_interval_ms = config.getint(LogConsumerSections.kafka, LogConsumerOptions.auto_commit_interval_ms)
-consumer_id = config.get(LogConsumerSections.kafka, LogConsumerOptions.consumer_id)
+consumer_id = config.get(LogConsumerSections.kafka, LogConsumerOptions.consumer_id).encode(code)
 partition_offset = config.getint(LogConsumerSections.kafka, LogConsumerOptions.partition_offset)
 
 commit_batch = config.getint(LogConsumerSections.mysql, LogConsumerOptions.commit_batch)
-mysql_hosts = config.get(LogConsumerSections.mysql, LogConsumerOptions.hosts)
-mysql_user = config.get(LogConsumerSections.mysql, LogConsumerOptions.user)
-mysql_pwd = config.get(LogConsumerSections.mysql, LogConsumerOptions.password)
+mysql_hosts = config.get(LogConsumerSections.mysql, LogConsumerOptions.hosts).encode(code)
+mysql_user = config.get(LogConsumerSections.mysql, LogConsumerOptions.user).encode(code)
+mysql_pwd = config.get(LogConsumerSections.mysql, LogConsumerOptions.password).encode(code)
 
-
+print(type(hosts))
 #create kafka client
+#client = KafkaClient(hosts=hosts)
 client = KafkaClient(hosts=hosts)
 topic = client.topics[topics]
 #consumer = topic.get_simple_consumer(consumer_group=consumer_group, auto_commit_enable=True, \
@@ -48,8 +50,10 @@ consumer = topic.get_balanced_consumer(consumer_group=consumer_group, managed=Tr
 if partition_offset >=0:
     partition_offset_pairs = []
     loger.debug('partition num:{}'.format(len(consumer.partitions)))
-    for p in consumer.partitions.itervalues():
+    #for p in consumer.partitions.itervalues():
+    for p in consumer.partitions.values():
         if p:
+            print('type p={}',type(p))
             loger.debug('the latest_available_offset of partion {} is: {}'.format(p.id, p.latest_available_offset()))
             if p.latest_available_offset() >= partition_offset:
                 partition_offset_pairs.append((p, partition_offset))
@@ -67,6 +71,7 @@ offset = partition_offset
 #creat loader for saving log to database
 loader = LoaderTzt(host=mysql_hosts, usr=mysql_user, pwd=mysql_pwd)
 if debug:
+    loger.warning('====debug mode, clear table......')
     loader.clear_table()
 while True:
     loger.info('====read from kafka start, offset:{}......'.format(offset))

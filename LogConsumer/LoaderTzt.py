@@ -1,5 +1,5 @@
 #-*-coding:utf-8-*-
-import MySQLdb
+import pymysql
 from LogKeys import *
 import logging.config
 
@@ -19,8 +19,8 @@ class LoaderTzt:
     def __init__(self, host='localhost', usr='root', pwd='666666'):
         self.__args = []
         self.__host = host
-        self.__usr = usr
-        self.__pwd = pwd
+        self.__usr = bytes.decode(usr)
+        self.__pwd = bytes.decode(pwd)
 
     def LoadPack(self, packstr, partition_id='', partition_offset=0):
         dict = eval(packstr)
@@ -49,7 +49,7 @@ class LoaderTzt:
         if logkeys.pack_server in dict.keys():
             pack_server = dict[logkeys.pack_server]  # 日志所在服务器
 
-        pack_content = packstr.replace("'", '"')
+        pack_content = packstr.decode().replace("'", '"')
         arg = (pack_id, pack_time, action, pack_status, pack_server, pack_content)
         self.__args.append(arg)
 
@@ -62,7 +62,7 @@ class LoaderTzt:
             format(TableFields.Pack_ID, TableFields.TimeStamp, TableFields.Action, TableFields.Status, \
                    TableFields.ServerIP, TableFields.LogContent)
 
-        con = MySQLdb.connect(self.__host, self.__usr, self.__pwd, 'LogAnalyDB')
+        con = pymysql.connect(self.__host, self.__usr, self.__pwd, 'LogAnalyDB')
         with con:
             try:
                 cursor = con.cursor()
@@ -78,11 +78,7 @@ class LoaderTzt:
             loger.info('writing to database finished')
 
     def clear_table(self):
-        sql = "INSERT INTO LogFlowTZT ({}, {}, {}, {}, {}, {}) VALUES (%s, %s, %s, %s, %s, %s)".\
-            format(TableFields.Pack_ID, TableFields.TimeStamp, TableFields.Action, TableFields.Status, \
-                   TableFields.ServerIP, TableFields.LogContent)
-
-        con = MySQLdb.connect(self.__host, self.__usr, self.__pwd, 'LogAnalyDB')
+        con = pymysql.connect(self.__host, self.__usr, self.__pwd, 'LogAnalyDB')
         with con:
             try:
                 cursor = con.cursor()

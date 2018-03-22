@@ -2,6 +2,7 @@ class ExtractorObj:
     def __init__(self):
         raise NotImplementedError
 
+    #def Extract(self, msg):
     def Extract(self, msg):
         pass
 

@@ -20,7 +20,8 @@ log.info('============================start LogReader===========================
 hosts = config.hosts()
 try:
     Ex = TztExtractor()
-    reader = ReadLogDoKafka(Ex, hosts=hosts, topic=config.topic())
+    topics = str.encode(config.topic())
+    reader = ReadLogDoKafka(Ex, hosts=hosts, topic=topics)
 except Exception as e:
     log.error('create reader {} catched:{}'.format(e.__class__.__name__, e.message))
 

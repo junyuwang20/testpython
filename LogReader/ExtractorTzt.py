@@ -1,13 +1,14 @@
 import sys
 sys.path.append("..")
-import re
 from ExtractorObj import ExtractorObj
+import re
 from LogKeys import *
 import logging
 
 
 log_name = 'logreader'
 loger = logging.getLogger(log_name)
+
 
 class TztExtractor(ExtractorObj):
     def __init__(self):
@@ -30,6 +31,7 @@ class TztExtractor(ExtractorObj):
         end = 0
 
         #find first pack time(it's where the pack start)
+        msg = bytes.decode(msg)
         m = re.search('\d+:\d+:\d+\.*\d*:', msg)
         last_pack_complete = True
         while m:

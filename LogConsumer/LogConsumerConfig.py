@@ -1,4 +1,10 @@
-from ConfigParser import RawConfigParser
+import sys
+
+if sys.version_info > (3, 0):
+    from configparser import RawConfigParser
+else:
+    from ConfigParser import RawConfigParser
+
 import os
 import io
 

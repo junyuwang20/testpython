@@ -24,10 +24,10 @@ def WriteSeek(FileName, seek):
     writeNum = 0
     #if not os.path.exists(FileName):
      #   os.path
-    with io.open(FileName, 'w') as f:
+    with io.open(FileName, 'wb') as f:
         if seek.isdigit():
-            Str = str(seek)
-            writeNum=f.write(unicode(Str))
+            Str = str(seek).encode()
+            writeNum=f.write(Str)
 
     return writeNum
 
@@ -62,10 +62,12 @@ class FileFlow(object):
                 try:
                     while line:
                         log.debug('====start read at offset {}'.format(seek))
+
                         seek_offset = self.__reader.read_do(line)
                         seek = seek + seek_offset
                         #if seek_offset > 0:
                            # log.info('seek is {};offset is {}; f.tell() is {}; line[0] is \'{}\''.format(seek, seek_offset, f.tell(), line[0]))
+
                         if f.tell() == end_pos:
                             break
 
