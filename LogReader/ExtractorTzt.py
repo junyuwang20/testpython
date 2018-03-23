@@ -1,5 +1,6 @@
 import sys
 sys.path.append("..")
+
 from ExtractorObj import ExtractorObj
 import re
 from LogKeys import *
@@ -31,7 +32,9 @@ class TztExtractor(ExtractorObj):
         end = 0
 
         #find first pack time(it's where the pack start)
-        msg = bytes.decode(msg)
+
+        if sys.version_info > (3, 0):
+            msg = bytes.decode(msg)
         m = re.search('\d+:\d+:\d+\.*\d*:', msg)
         last_pack_complete = True
         while m:
